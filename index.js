@@ -1,10 +1,12 @@
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const PaymentModel = require("./payment"); // Corectăm importul aici
+const PaymentModel = require("./payment");
 
 const app = express();
-const port = 3001;
+const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
@@ -13,30 +15,34 @@ main().catch((err) => console.log(err));
 
 async function main() {
   try {
-    await mongoose.connect(
-      "mongodb+srv://aaw1713tudor:7777777AAA@cluster0.wk7njla.mongodb.net/aichatdatabase?retryWrites=true&w=majority&appName=Cluster0",
-      {}
-    );
+    await mongoose.connect(process.env.MONGODB_URI, {});
     console.log("CONNECTED TO DATABASE SUCCESSFULLY");
   } catch (error) {
     console.error("COULD NOT CONNECT TO DATABASE:", error.message);
   }
 }
 
+// --> The server calls itself every 10 minutes and performs a fetch to keep it active.
+// This is necessary because we are using Render, a free platform, and if the server is inactive for 10 minutes,
+// the project will be deactivated.
+setInterval(() => {
+  fetch("https://aichat-project-backend.onrender.com/payments");
+  console.log("fetch");
+}, [600000]);
+// <--
+
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-// Accesarea colecției payments
 app.get("/payments", (req, res) => {
-  PaymentModel.find() // Folosim PaymentModel în loc de UserModel
+  PaymentModel.find()
     .then((payments) => res.json(payments))
     .catch((err) => res.json(err));
 });
 
-// Crearea unui nou document de plată
 app.post("/payment/create", (req, res) => {
-  PaymentModel.create(req.body) // Folosim PaymentModel pentru a crea un nou document
+  PaymentModel.create(req.body)
     .then((payment) => res.json(payment))
     .catch((err) => res.json(err));
 });
